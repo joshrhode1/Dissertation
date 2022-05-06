@@ -7,7 +7,6 @@ using UnityEngine.UI;
 
 public class ActionBindings : MonoBehaviour
 {
-    //public OnButtonPress button_actions;
     public InputActionReference input_reference;
     GameObject last_open_ui = null;
     GameObject restart_ui;
@@ -31,7 +30,6 @@ public class ActionBindings : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //button_actions = GetComponent<OnButtonPress>();
 
     }
 

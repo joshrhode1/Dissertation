@@ -23,11 +23,9 @@ public class FillLiquid : MonoBehaviour
     // If particle collides with our object it calls this function
     void OnParticleCollision(GameObject other)
     {
-        //TODO: Fill liquid with the colour of the particle colliding with it
         ParticleSystem particle_system = other.GetComponent<ParticleSystem>();
         var settings = particle_system.main;
 
-        // TODO: Make fill according to speed of particles
         float current_fill = liquid_mat.GetFloat("_Fill");
         liquid_mat.SetFloat("_Fill", current_fill + 0.001f);
         liquid_mat.SetColor("_LiquidColour", settings.startColor.color);

@@ -9,7 +9,6 @@ public class FunnelFlowControl : MonoBehaviour
     public XRBaseInteractable stopperInteractable;
     public XRSimpleInteractable valve_interactable;
     public Material invisible_material;
-    //public List<GameObject> user_interfaces;
     public GameObject canvas_ui;
     public GameObject finish_button;
     public GameObject flask_liquid;
@@ -27,7 +26,6 @@ public class FunnelFlowControl : MonoBehaviour
     AudioSource negative_sound;
     float pressure_countdown;
     float pressure_release_countdown = 20.0f;
-    //bool countdown_active = false;
     int num_pressure_releases = 0;
     float countdown_lower = 7.0f;
     float countdown_upper = 13.0f;
@@ -67,28 +65,14 @@ public class FunnelFlowControl : MonoBehaviour
         GameObject particle_module = GetChildWithName(pouring_object, "Liquid Pour");
         particle_system = particle_module.GetComponent<ParticleSystem>();
 
-        /*
-        if (!funnel_liquid)
-        {
-            Debug.Log("Funnel Liquid Null");
-        }
-
-        if (!funnel_tip_liquid) 
-        {
-            Debug.Log("Tip Liquid Null");
-        }
-        */
-
         Renderer tip_liquid_rend = funnel_tip_liquid.GetComponent<Renderer>();
         funnel_tip_material = tip_liquid_rend.material;
 
+        // Add events for when the stopper is interacted with
         stopperInteractable.selectEntered.AddListener(OnStopperSelected);
         stopperInteractable.selectExited.AddListener(OnStopperReleased);
 
-        //stopperInteractable.hoverEntered.AddListener(OnSocketHoverEntered);
-        //stopperInteractable.hoverExited.AddListener(OnSocketHoverExited);
-
-        //Make child stopper inivisble to start with
+        //Make child stopper invisble to start with
         GameObject stopper_child = GetChildWithName(gameObject, "StopperStatic");
         stopper_top = GetChildWithName(stopper_child, "StopperTop");
         stopper_base = GetChildWithName(stopper_child, "StopperBase");
@@ -100,7 +84,6 @@ public class FunnelFlowControl : MonoBehaviour
         stopper_base_mesh.enabled = false;
 
         valve_interactable.selectEntered.AddListener(OnValveSelected);
-        //valve_interactable.activated.AddListener(OnValveActivated);
 
         hissing_audio = GetComponent<AudioSource>();
 
@@ -130,19 +113,7 @@ public class FunnelFlowControl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // TODO:: If bottom fill is greater than 0 then fill the tip with colour of bottom liquid colour
-        // Else fill with top liquid (potential to fill tip partially with both colours)
-
-        // TODO:: If Stopper is still in then do not pour
-        // TODO:: If Stopper is not in, then pour is valve is open. Do not pour if it it is closed
-
-        // TODO:: If tap is closed and there is still liquid in the tip, then keep the tip partially filled
-
         bool stopperSocket = IsStopperInSocket(stopperInteractable.selectingInteractor);
-
-
-        //float valve_angle = Vector3.Angle(valve_pivot.transform.up, transform.up);
-        //float valve_x_rotation = valve_pivot.transform.eulerAngles.x;
 
         float funnel_fill = funnel_liquid_material.GetFloat("_Fill");
         float top_funnel_fill = funnel_liquid_material.GetFloat("_Fill2");
@@ -150,6 +121,8 @@ public class FunnelFlowControl : MonoBehaviour
         Color tip_colour = funnel_liquid_material.GetColor("_LiquidColour");
 
         bool liquid_present = true;
+
+        // Sets the colour of the liquid in the bottom cylinder
         if (funnel_fill > 0f)
         {
             tip_colour = funnel_liquid_material.GetColor("_LiquidColour");
@@ -163,35 +136,19 @@ public class FunnelFlowControl : MonoBehaviour
             liquid_present = false;
         }
 
+
+        // Set the pouring liquid as same colour as the liquid at the bottom of cylinder
         funnel_tip_material.SetColor("_LiquidColour", tip_colour);
         var particle_settings = particle_system.main;
         particle_settings.startColor = new Color(tip_colour.r, tip_colour.g, tip_colour.b, 1f);
 
-        //float rotation_abs = Mathf.Abs(valve_x_rotation);
 
-        // This means they are trying to release pressure from the funnel
+       
         if (IsValveOpen() && stopperSocket)
         {
-            /*
-            Debug.Log("Releasing Pressure");
-            // Send haptic for now. This will need to be hissing sound in the future
-            try
-            {
-                XRBaseControllerInteractor hand = (XRBaseControllerInteractor)GetComponent<TwoHandGrabInteractable>().selectingInteractor;
-                hand.SendHapticImpulse(0.4f, 0.5f);
-            }
-            catch (System.InvalidCastException)
-            {
-                Debug.Log("No Controller Holding");
-            }
-
-            if (pouring_object)
-            {
-                pouring_object.SetActive(false);
-            }
-            */
+          
         }
-        // Closed tap
+        // Closed tap so no liquid pouring
         else if (!IsValveOpen() || !liquid_present || stopperSocket)
         {
             funnel_tip_material.SetFloat("_Fill", 0f);
@@ -201,7 +158,7 @@ public class FunnelFlowControl : MonoBehaviour
                 pouring_object.SetActive(false);
             }
         }
-        else // Opened tap
+        else // Opened tap so liquid must pour
         {
             funnel_tip_material.SetFloat("_Fill", 1f);
 
@@ -212,12 +169,13 @@ public class FunnelFlowControl : MonoBehaviour
             }
         }
 
-
+        // Initial pressure countdown
         if (num_pressure_releases > 0 && pressure_countdown > 0f && pressure_building) 
         {
             pressure_countdown -= Time.deltaTime;
         }
 
+        // Second pressure countdown
         if (pressure_trapped && pressure_release_countdown > 0f) 
         {
             pressure_release_countdown -= Time.deltaTime;
@@ -226,31 +184,13 @@ public class FunnelFlowControl : MonoBehaviour
         if (pressure_trapped && pressure_release_countdown <= 0f)
         {
             // Experiment has failed. Pressure has built up too much
-            // TODO :: Make stopper fly out of the funnel
             current_step = CurrentStep.None;
             DisableAllUIExcept("PressureFailure");
-
-            /*
-            foreach (GameObject ui in user_interfaces)
-            {
-                if (ui.name == "PressureFailure")
-                {
-                    ui.SetActive(true);
-                }
-                else
-                {
-                    ui.SetActive(false);
-                }
-            }
-            */
         }
 
         if (num_pressure_releases > 0 && pressure_countdown <= 0f && pressure_building) 
         {
-            //pressure_trapped = true;
-            //pressure_release_countdown = 20.0f;
-            //pressure_building = false;
-
+            
             // Send haptic to controller holding the top of the funnel to indicate that pressure needs to be released
             try
             {
@@ -272,7 +212,7 @@ public class FunnelFlowControl : MonoBehaviour
         // Make sure they are shaking vigourously enough in between pressure releases
         if (num_pressure_releases > 0) 
         {
-            // TODO:: Get wobble amount from wobble script
+            
             float fill_1 = funnel_liquid_material.GetFloat("_Fill");
             float fill_2 = funnel_liquid_material.GetFloat("_Fill2");
 
@@ -284,11 +224,10 @@ public class FunnelFlowControl : MonoBehaviour
 
                 float max_wobble = Mathf.Max(wobble_x, wobble_z);
                 max_wobble = Mathf.Abs(max_wobble);
-                //Debug.Log("Max wobble " + max_wobble);
+                
 
                 float wobble_threshold = funnel_liquid_material.GetFloat("_WobbleThreshold");
-                //float wobble_threshold = 0.019f;
-
+                
                 if (max_wobble > wobble_threshold) 
                 {
                     // They have shaken enough for this instance
@@ -299,15 +238,10 @@ public class FunnelFlowControl : MonoBehaviour
             }
         }
 
+        // Step 5 has been completed correctly
         if (stopper_added_correctly && num_pressure_releases == 0 && !step_4_done) 
         {
-            /*
-            GameObject step_4 = GetChildWithName(canvas_ui, "Step4");
-            GameObject step_5 = GetChildWithName(canvas_ui, "Step5");
-
-            step_4.SetActive(false);
-            step_5.SetActive(true);
-            */
+          
             current_step = CurrentStep.Fifth;
 
             if (version_manager.guided) 
@@ -318,7 +252,7 @@ public class FunnelFlowControl : MonoBehaviour
             step_4_done = true;
         }
 
-
+        // Check is we have completed step 1
         if (current_step == CurrentStep.First) 
         {
             foreach (ParticleHit particle_hit in particle_hit_scripts) 
@@ -335,6 +269,7 @@ public class FunnelFlowControl : MonoBehaviour
             }
         }
 
+        // Check is we have completed step 2
         if (current_step == CurrentStep.Second) 
         {
             bool all_poured = true;
@@ -353,26 +288,15 @@ public class FunnelFlowControl : MonoBehaviour
             }
         }
 
-
+        // Call event to react to software version change
         if (last_known_guided != version_manager.guided)
         {
             last_known_guided = version_manager.guided;
             OnGuidedUpdated();
         }
 
-        /*
-        if (!valve_events_added && valve_interactable.gameObject.activeSelf) 
-        {
-            valve_interactable.selectEntered.AddListener(OnValveSelected);
-            valve_interactable.activated.AddListener(OnValveActivated);
-            valve_events_added = true;
-        }
-        */
-
-        //Debug.Log(valve_angle);
     }
 
-    // TODO:: Make this validate support step & produce sound when funnel is placed in the clamp
     public void OnFunnelSelected(SelectEnterEventArgs args) 
     {
         bool funnel_in_socket = IsStopperInSocket(args.interactor);
@@ -381,7 +305,7 @@ public class FunnelFlowControl : MonoBehaviour
         {
             bool stopperSocket = IsStopperInSocket(stopperInteractable.selectingInteractor);
 
-
+            // If the funnel is not on the clamp (so grabbed by the user) and valve is closed with stopper in place, and still has pressure trapped then make sure we start building pressure
             if (stopper_added_correctly && num_pressure_releases > 0 && stopperSocket && !pressure_trapped && !IsValveOpen()) 
             {
                 pressure_building = true;
@@ -389,22 +313,16 @@ public class FunnelFlowControl : MonoBehaviour
             return;
         }
 
+        // If we place the funnel on the clamp before releasing all pressure then fail the experiment
         if (stopper_added_correctly && num_pressure_releases > 0) 
         {
             current_step = CurrentStep.None;
             DisableAllUIExcept("PressureFailure");
         }
-
+        // If all pressure released when the user places the funnel back on the clamp then move onto step 6 (to remove the stopper)
         if (stopper_added_correctly && num_pressure_releases == 0 && !funnel_clamped_correctly) 
         {
-            /*
-            GameObject step_5 = GetChildWithName(canvas_ui, "Step5");
-            GameObject step_6 = GetChildWithName(canvas_ui, "Step6");
-
-            step_5.SetActive(false);
-            step_6.SetActive(true);
-            */
-
+            
             current_step = CurrentStep.Sixth;
 
             if (version_manager.guided) 
@@ -418,8 +336,6 @@ public class FunnelFlowControl : MonoBehaviour
 
     public void OnStopperSelected(SelectEnterEventArgs args)
     {
-        //stopperInteractable.gameObject.transform.SetParent(gameObject.transform);
-
         bool stopperSocket = IsStopperInSocket(args.interactor);
 
         if (!stopperSocket)
@@ -427,6 +343,7 @@ public class FunnelFlowControl : MonoBehaviour
             return;
         }
 
+        // If stopper is in funnel then make static stopper visible and rigid stopper invisible
         stopper_top_mesh.enabled = true;
         stopper_base_mesh.enabled = true;
 
@@ -434,21 +351,10 @@ public class FunnelFlowControl : MonoBehaviour
         GameObject stopper_socket_top = GetChildWithName(stopper_socket, "StopperTop");
         GameObject stopper_socket_base = GetChildWithName(stopper_socket, "StopperBase");
 
-        //stopper_socket_top.GetComponent<MeshRenderer>().enabled = false;
-        //stopper_socket_base.GetComponent<MeshRenderer>().enabled = false;
-
-        /*
-        Material stopper_top_mat = stopper_socket_top.GetComponent<Material>();
-        Material stopper_base_mat = stopper_socket_base.GetComponent<Material>();
-
-        stopper_top_mat = invisible_material;
-        stopper_base_mat = invisible_material;
-        */
-
         stopper_socket_top.GetComponent<Renderer>().material = invisible_material;
         stopper_socket_base.GetComponent<Renderer>().material = invisible_material;
 
-
+        // Revert back to step six (indicating to remove stopper) if stopper has been placed back onto the funnel during step 7
         if (current_step == CurrentStep.Seventh)
         {
             current_step = CurrentStep.Sixth;
@@ -462,6 +368,7 @@ public class FunnelFlowControl : MonoBehaviour
         }
 
         XRGrabInteractable funnel_interactable = GetComponent<XRGrabInteractable>();
+        // Start building pressure if the valve is closed and the user is shaking the funnel
         if (current_step == CurrentStep.Fourth && !IsValveOpen() && !IsStopperInSocket(funnel_interactable.selectingInteractor) && num_pressure_releases > 0) 
         {
             pressure_building = true;
@@ -472,6 +379,7 @@ public class FunnelFlowControl : MonoBehaviour
             return;
         }
 
+        // Set random number of required pressure releases
         num_pressure_releases = Random.Range(1, 6);
         Debug.Log("Number pressures: " + num_pressure_releases);
 
@@ -480,14 +388,12 @@ public class FunnelFlowControl : MonoBehaviour
             shaking_verification.Add(false);
         }
 
+
         if (!IsValveOpen() && !IsStopperInSocket(funnel_interactable.selectingInteractor)) 
-        {
-            // TODO :: This may only need to be set when the funnel starts to be shaken
+        {     
             pressure_building = true;
         }
 
-        //GameObject step_3 = GetChildWithName(canvas_ui, "Step3");
-        //GameObject step_4 = GetChildWithName(canvas_ui, "Step4");
 
         bool beakers_empty = true;
 
@@ -495,12 +401,9 @@ public class FunnelFlowControl : MonoBehaviour
         {
             beakers_empty = beakers_empty && particle_hit.beaker_fully_poured;
         }
-
+        // If the beakers are empty then we have placed the stopper in correct order. Else we have done a step too early
         if (beakers_empty && !step_4_done)
         {
-            //step_3.SetActive(false);
-            //step_4.SetActive(true);
-
             current_step = CurrentStep.Fourth;
 
             if (version_manager.guided)
@@ -520,8 +423,6 @@ public class FunnelFlowControl : MonoBehaviour
 
     public void OnStopperReleased(SelectExitEventArgs args)
     {
-        //stopperInteractable.gameObject.transform.SetParent(null);
-
         bool stopperSocket = IsStopperInSocket(args.interactor);
 
         if (!stopperSocket)
@@ -529,6 +430,7 @@ public class FunnelFlowControl : MonoBehaviour
             return;
         }
 
+        // Make sure rigid stopper is invisible
         stopper_top_mesh.enabled = false;
         stopper_base_mesh.enabled = false;
 
@@ -536,29 +438,12 @@ public class FunnelFlowControl : MonoBehaviour
         GameObject stopper_socket_top = GetChildWithName(stopper_socket, "StopperTop");
         GameObject stopper_socket_base = GetChildWithName(stopper_socket, "StopperBase");
 
-        //stopper_socket_top.GetComponent<MeshRenderer>().enabled = true;
-        //stopper_socket_base.GetComponent<MeshRenderer>().enabled = true;
-
-        /*
-        Material stopper_top_mat = stopper_socket_top.GetComponent<Material>();
-        Material stopper_base_mat = stopper_socket_base.GetComponent<Material>();
-
-        stopper_top_mat = stopper_top.GetComponent<Material>();
-        stopper_base_mat = stopper_base.GetComponent<Material>();
-        */
-
+        // Make sure static stopper is visible
         stopper_socket_top.GetComponent<Renderer>().material = stopper_top.GetComponent<Renderer>().material;
         stopper_socket_base.GetComponent<Renderer>().material = stopper_base.GetComponent<Renderer>().material;
 
         if (funnel_clamped_correctly)
-        {
-            /*
-            GameObject step_6 = GetChildWithName(canvas_ui, "Step6");
-            GameObject step_7 = GetChildWithName(canvas_ui, "Step7");
-
-            step_6.SetActive(false);
-            step_7.SetActive(true);
-            */
+        {        
 
             current_step = CurrentStep.Seventh;
 
@@ -590,11 +475,12 @@ public class FunnelFlowControl : MonoBehaviour
 
     public void OnValveSelected(SelectEnterEventArgs args)
     {
+        // Open/Close the valve
         valve_pivot.transform.RotateAround(valve_pivot.transform.position, valve_pivot.transform.right, 90);
 
-        //float valve_angle = Vector3.Angle(valve_pivot.transform.up, transform.up);
         bool stopperSocket = IsStopperInSocket(stopperInteractable.selectingInteractor);
 
+        // If valve is open with stopper in place then release pressure. Else start building pressure again
         if (IsValveOpen() && stopperSocket)
         {
             Debug.Log("Releasing Pressure");
@@ -622,7 +508,6 @@ public class FunnelFlowControl : MonoBehaviour
                 // Reset pressure countdown
                 pressure_countdown = Random.Range(countdown_lower, countdown_upper);
 
-                // TODO :: This may only need to be set when the funnel starts to be shaken
                 pressure_building = true;
                 Debug.Log("Pressure building again");
             }
@@ -666,7 +551,7 @@ public class FunnelFlowControl : MonoBehaviour
             return false;
         }
     }
-
+    // Called when the user presses the finish button
     void OnFinish()
     {
         // Make sure they have shaken enough between pressure releases
@@ -697,15 +582,17 @@ public class FunnelFlowControl : MonoBehaviour
         {
             last_step.SetActive(false);
         }
-
+        // If not shaken enough then fail the user for this
         if (!all_shaken)
         {
             shake_failure.SetActive(true);
         }
+        // If too much bottom layer left in funnel then fail user
         else if (funnel_fill >= 0.01) 
         {
             funnel_layer_failure.SetActive(true);
         }
+        // If too much upper layer in flask then fail user
         else if (flask_upper_fill >= 0.01)
         {
             flask_layer_failure.SetActive(true);
@@ -714,36 +601,8 @@ public class FunnelFlowControl : MonoBehaviour
         {
             success.SetActive(true);
         }
-
-        /*
-        foreach (GameObject ui in user_interfaces) 
-        {
-            if (ui.name == "Step7" && ui.activeSelf) 
-            {
-                ui.SetActive(false);
-            }
-
-            if (!all_shaken && ui.name == "ShakeFailure")
-            {
-                ui.SetActive(true);
-            }
-            else if (all_shaken && funnel_fill >= 0.01 && ui.name == "FunnelLayerFailure")
-            {
-                ui.SetActive(true);
-            }
-            else if (all_shaken && funnel_fill < 0.01 && flask_upper_fill >= 0.01 && ui.name == "FlaskLayerFailure")
-            {
-                ui.SetActive(true);
-            }
-            else if (all_shaken && funnel_fill < 0.01 && flask_upper_fill < 0.01 && ui.name == "Success") 
-            {
-                ui.SetActive(true);
-            }
-            
-        }
-        */
     }
-
+    // Called when the teaching version changes
     void OnGuidedUpdated()
     {
         if (last_known_guided)

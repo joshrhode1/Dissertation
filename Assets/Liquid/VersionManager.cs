@@ -9,8 +9,6 @@ public class VersionManager : MonoBehaviour
 {
     public bool guided = false;
     public InputActionReference change_version;
-    //public GameObject guided_object;
-    //public GameObject free_object;
     public GameObject welcome_object;
     public List<GameObject> glassware;
     public GameObject step_1_object;
@@ -45,11 +43,6 @@ public class VersionManager : MonoBehaviour
     {
         
     }
-
-    //TODO:: Make glassware show up after choosing their version
-    //TODO:: On primary button press -> toggle guided bool
-    //TODO:: Have funnelflowcontrol constantly listening for a change in the bool. Enum to store step we are on
-
 
     void OnGuidedPressed() 
     {

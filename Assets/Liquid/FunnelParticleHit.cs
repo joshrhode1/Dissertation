@@ -8,7 +8,6 @@ public class FunnelParticleHit : MonoBehaviour
     public ParticleSystem part;
     public List<ParticleCollisionEvent> collisionEvents;
     FunnelFlowControl funnel_flow_control;
-    //Material pouring_liquid_material;
     Material funnel_liquid_material;
     Material funnel_tip_material;
     float fill_increase_per_particle = 0.001f;
@@ -21,8 +20,7 @@ public class FunnelParticleHit : MonoBehaviour
 
         GameObject object_parent = transform.parent.gameObject;
         GameObject tip_object = object_parent.transform.parent.gameObject;
-        //GameObject beaker_LOD = GetChildWithName(beaker_parent, "BeakerLiquid_LOD0");
-
+     
         Renderer liquid_rend = tip_object.GetComponent<Renderer>();
         funnel_tip_material = liquid_rend.material;
 
@@ -43,7 +41,6 @@ public class FunnelParticleHit : MonoBehaviour
         
     }
 
-    // TODO:: DO not allow pouring to occur too early
     // When particle hits 
     void OnParticleCollision(GameObject other)
     {
@@ -67,30 +64,15 @@ public class FunnelParticleHit : MonoBehaviour
             }
         }
 
-        /*
-        GameObject second_grab_object = GetChildWithName(other, "SecondGrabPoint");
-        BoxCollider grab_collider = second_grab_object.GetComponent<BoxCollider>();
-
-        float grab_y = grab_collider.center.y;
-
-        if (grab_y < lowest_y)
-        {
-            lowest_y = grab_y;
-            bottom_id = grab_collider.GetInstanceID();
-        }
-        */
-
         int count = 0;
         while (count < numCollisionEvents)
         {
             Component collider = collisionEvents[count].colliderComponent;
-            //Collider collider = (Collider)comp;
 
+            // If we hit the bottom collider of the flask then start filling it up and reducing the fill of the sep funnel
             if (collider.GetInstanceID() == bottom_id)
             {
-                //TODO:: If the particle hits the bottom of the funnel then make sure it fills up
-                //TODO:: If particle hits the bottom of the funnel then make sure the pouring beaker reduces fill
-
+                // if we have not attempted to shake the funnel then fail the experiment
                 if (!funnel_flow_control.stopper_added_correctly || !funnel_flow_control.funnel_clamped_correctly) 
                 {
                     DisableAllUIExcept("EarlyStepFailure");
@@ -109,7 +91,7 @@ public class FunnelParticleHit : MonoBehaviour
                 Renderer liquid_rend2 = flask_liquid2.GetComponent<Renderer>();
                 Renderer liquid_rend3 = flask_liquid3.GetComponent<Renderer>();
                 Renderer liquid_rend4 = flask_liquid4.GetComponent<Renderer>();
-                //Material liquid_mat = liquid_rend.material;
+               
                 liquid_mats.Add(liquid_rend.material);
                 liquid_mats.Add(liquid_rend2.material);
                 liquid_mats.Add(liquid_rend3.material);
@@ -141,10 +123,6 @@ public class FunnelParticleHit : MonoBehaviour
                             mat.SetColor("_SurfacColour", particle_colour);
                             mat.SetFloat("_Fill", current_fill + fill_increase_per_particle);
                         }
-
-                        //liquid_mat.SetColor("_LiquidColour", particle_colour);
-                        //liquid_mat.SetColor("_SurfacColour", particle_colour);
-                        //liquid_mat.SetFloat("_Fill", current_fill + fill_increase_per_particle);
                         successful_fill = true;
                     }
                     else if (second_fill1 <= 0 || particle_colour == second_liquid_colour)
@@ -157,10 +135,7 @@ public class FunnelParticleHit : MonoBehaviour
                             mat.SetColor("_SurfaceColour2", particle_colour);
                             mat.SetFloat("_Fill2", second_fill + fill_increase_per_particle);
                         }
-
-                        //liquid_mat.SetColor("_LiquidColour2", particle_colour);
-                        //liquid_mat.SetColor("_SurfaceColour2", particle_colour);
-                        //liquid_mat.SetFloat("_Fill2", second_fill + fill_increase_per_particle);
+       
                         successful_fill = true;
                     }
 
@@ -176,11 +151,6 @@ public class FunnelParticleHit : MonoBehaviour
                         }
                     }
                 }
-
-                
-                //liquid_mat.SetFloat("_Fill", current_fill + 0.001f);
-                
-                //liquid_mat.SetColor("_LiquidColour", particle_colour);
 
                 Debug.Log("Hit Bottom");
             }
